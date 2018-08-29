@@ -85,8 +85,8 @@ class SendToElastic
     public function make()
     {
         $ret = json_decode($this->data);
-        $this->id = $ret->repo.'_'.str_replace('/','_',$ret->path);
-        $url = $this->elsHost . '/' . $this->elsType . '/' . $this->elsIndex . '/' . $this->id;
+        $this->id = str_replace('/', '_', $ret->repo . $ret->path);
+        $url = $this->elsHost . '/' . $this->elsIndex . '/' . $this->elsType . '/' . $this->id;
         $this->request($url, $this->data);
     }
 }
