@@ -2,39 +2,37 @@
 
 class SendToElastic
 {
-    private $index;
-    private $host;
-    private $path;
-    private $user;
-    private $gitAuth;
+    private $elsHost;
+    private $elsIndex;
+    private $elsType;
+    private $githubBasicAuth;
     private $repository;
-    private $type;
+    private $repoPath;
     private $data;
 
     public function __construct(array $options)
     {
         if (empty($options)) {
-            throw new Exception("Error Processing Request");
+            throw new Exception('Error Processing Request');
         }
 
-        $this->user = $options['user'];
         $this->repository = $options['repository'];
-        $this->path = $options['path'];
-        $this->type = $options['type'];
-        $this->index = $options['index'];
-        $this->host = $options['host'];
-        $this->gitAuth = $options['gitUser'].':'.$options['gitPass'];
+        $this->repoPath = $options['repoPath'];
+        $this->elsType = $options['elsType'];
+        $this->elsIndex = $options['elsIndex'];
+        $this->elsHost = $options['elsHost'];
+        $this->githubBasicAuth = $options['githubUser'] . ':' . $options['githubPass'];
     }
 
-    public function request($url, $data=null, $headers = null)
+    public function request($url, $data = null, $headers = null)
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
-        if(empty($data)){
+        if (empty($data)) {
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            curl_setopt($ch, CURLOPT_USERPWD, $this->gitAuth);
+            curl_setopt($ch, CURLOPT_USERPWD, $this->githubBasicAuth);
         }
 
         if (!empty($data)) {
@@ -48,7 +46,7 @@ class SendToElastic
         $response = curl_exec($ch);
     
         if (curl_error($ch)) {
-            trigger_error('Curl Error:' . curl_error($ch));
+            trigger_error('cURL error:' . curl_error($ch));
         }
     
         curl_close($ch);
@@ -57,10 +55,11 @@ class SendToElastic
 
     public function getJson()
     {
-        $url = 'https://api.github.com/repos/'. $this->user .'/'. $this->repository . '/contents/' . $this->path . '?ref=master';
+        $url = 'https://api.github.com/repos/' .
+          $this->repository . '/contents/' . $this->repoPath . '?ref=master';
         $resp = (object)json_decode($this->request($url));
         foreach ($resp as $repo) {
-            if ($repo->type == "dir") {
+            if ($repo->type === 'dir') {
                 $dir = json_decode($this->request($repo->url));
                 foreach ($dir as $value) {
                     if ($this->isJson($value->name)) {
@@ -76,24 +75,26 @@ class SendToElastic
 
     public function isJson($j)
     {
-        return substr($j, -5) === ".json" ? true : false;
+        return substr($j, -5) === '.json' ? true : false;
     }
 
     public function make()
     {
-        $url = $this->host . '/' . $this->type . '/' . $this->index;
+        $url = $this->elsHost . '/' . $this->elsType . '/' . $this->elsIndex;
         $this->request($url, $this->data);
     }
 }
+
+/*
 $o = array(
-    'user' => '',
-    'gitUser' => '',
-    'gitPass' => '',
+    'githubUser' => '',
+    'githubPass' => '',
     'repository' => '',
-    'path' => '',
-    'type' => '',
-    'index' => '',
-    'host' => ''
+    'repoPath' => '',
+    'elsType' => '',
+    'elsIndex' => '',
+    'elsHost' => ''
 );
 $a = new SendToElastic($o);
 $a->getJson();
+*/
