@@ -9,6 +9,7 @@ class SendToElastic
     private $repository;
     private $repoPath;
     private $data;
+    private $id;
 
     public function __construct(array $options)
     {
@@ -65,36 +66,27 @@ class SendToElastic
                     if ($this->isJson($value->name)) {
                         $json = json_decode($this->request($value->url));
                         $this->data = base64_decode($json->content);
-                        print_r($this->data);
                         $this->make();
                     }
                 }
+            }elseif($this->isJson($repo->name)){
+                $json = json_decode($this->request($repo->url));
+                $this->data = base64_decode($json->content);
+                $this->make();
             }
         }
     }
 
     public function isJson($j)
     {
-        return substr($j, -5) === '.json' ? true : false;
+        return (substr($j, 1) != '.' && substr($j, -5) === '.json') ? true : false;
     }
 
     public function make()
     {
-        $url = $this->elsHost . '/' . $this->elsType . '/' . $this->elsIndex;
+        $ret = json_decode($this->data);
+        $this->id = $ret->repo.'_'.str_replace('/','_',$ret->path);
+        $url = $this->elsHost . '/' . $this->elsType . '/' . $this->elsIndex . '/' . $this->id;
         $this->request($url, $this->data);
     }
 }
-
-/*
-$o = array(
-    'githubUser' => '',
-    'githubPass' => '',
-    'repository' => '',
-    'repoPath' => '',
-    'elsType' => '',
-    'elsIndex' => '',
-    'elsHost' => ''
-);
-$a = new SendToElastic($o);
-$a->getJson();
-*/
