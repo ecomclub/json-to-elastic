@@ -101,7 +101,7 @@ class SendToElastic
                     break;
                 case 'file': // if is a file
                     if ($this->isJson($repo->name)) { // verify if it's is a valid json file
-                        $json = json_decode($this->request($repo->url)); // request the json content 
+                        $json = json_decode($this->request($repo->url)); // request the json content
                         $this->data = base64_decode($json->content); // decode the content
                         $this->make(); // call the make(); function to send json to elastic search api
                     }
@@ -131,8 +131,8 @@ class SendToElastic
     public function make()
     {
         $ret = json_decode($this->data); // decode $this->data object
-        $this->id = str_replace('/', '_', $ret->repo.'_'.$ret->path); // concat $reto->repo with $ret->path and repleace '/' to '_' to use like a unique id
-        $url = $this->elsHost . '/' . $this->elsType . '/' . $this->elsIndex . '/' . $this->id; // make url to ES api request 
+        $this->id = str_replace('/', '_', $ret->repo . $ret->path); // concat $reto->repo with $ret->path and repleace '/' to '_' to use like a unique id
+        $url = $this->elsHost . '/' . $this->elsIndex . '/' . $this->elsType . '/' . $this->id; // make url to ES api request
         $this->request($url, $this->data); // make post request on $url path with $this->data content
     }
 }
