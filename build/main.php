@@ -5,15 +5,25 @@ class SendToElastic
     private $index;
     private $host;
     private $path;
+    private $user;
+    private $gitAuth;
+    private $repository;
     private $type;
     private $data;
 
-    public function __construct($path, $type, $index, $host)
+    public function __construct(array $options)
     {
-        $this->path = $path;
-        $this->type = $type;
-        $this->index = $index;
-        $this->host = $host;
+        if (empty($options)) {
+            throw new Exception("Error Processing Request");
+        }
+
+        $this->user = $options['user'];
+        $this->repository = $options['repository'];
+        $this->path = $options['path'];
+        $this->type = $options['type'];
+        $this->index = $options['index'];
+        $this->host = $options['host'];
+        $this->gitAuth = $options['gitUser'].':'.$options['gitPass'];
     }
 
     public function request($url, $data=null, $headers = null)
@@ -21,6 +31,11 @@ class SendToElastic
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, dirname(__FILE__) . DIRECTORY_SEPARATOR);
+
+        if(empty($data)){
+            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+            curl_setopt($ch, CURLOPT_USERPWD, $this->gitAuth);
+        }
 
         if (!empty($data)) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -42,7 +57,7 @@ class SendToElastic
 
     public function getJson()
     {
-        $url = 'https://api.github.com/repos/ecomclub/' . $this->path . '/contents/docs?ref=master';
+        $url = 'https://api.github.com/repos/'. $this->user .'/'. $this->repository . '/contents/' . $this->path . '?ref=master';
         $resp = (object)json_decode($this->request($url));
         foreach ($resp as $repo) {
             if ($repo->type == "dir") {
@@ -70,6 +85,15 @@ class SendToElastic
         $this->request($url, $this->data);
     }
 }
-
-$a = new SendToElastic();
+$o = array(
+    'user' => '',
+    'gitUser' => '',
+    'gitPass' => '',
+    'repository' => '',
+    'path' => '',
+    'type' => '',
+    'index' => '',
+    'host' => ''
+);
+$a = new SendToElastic($o);
 $a->getJson();
