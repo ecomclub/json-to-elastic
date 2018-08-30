@@ -2,7 +2,7 @@
 Search for JSON files in repositories on github and send to ElasticSearch.
 
 ## Using
-```
+```php
 include 'build/main.php'; // include script
 
 /** array with options required */
