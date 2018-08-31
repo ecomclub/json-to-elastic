@@ -1,5 +1,5 @@
 # json-to-elastic
-Search for JSON files in repositories on github and send to ElasticSearch.
+Search for JSON files on GitHub repository and sync with ElasticSearch cluster.
 
 ## Using
 ```php
