@@ -3,7 +3,7 @@ Search for JSON files on GitHub repository and sync with ElasticSearch cluster.
 
 ## Using
 ```php
-include 'main.php'; // include class
+include './send-to-elastic.php'; // include class
 
 /** array with options required */
 
