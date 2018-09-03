@@ -18,7 +18,7 @@ class SendToElastic
     private $data;
     /** Id to send in elastic request */
     private $id;
-    
+
     /**
      * Constructor
      *
@@ -47,32 +47,37 @@ class SendToElastic
      * @param [array] $headers
      * @return void
      */
-    public function request($url, $data = null, $headers = null)
+    public function request($url, $method='GET', $data = null, $headers = null)
     {
         $ch = curl_init($url);
+        var_dump($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERAGENT, dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
-        if (empty($data)) {
+        if ($method == 'GET') {
             curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
             curl_setopt($ch, CURLOPT_USERPWD, $this->githubBasicAuth);
         }
 
-        if (!empty($data)) {
+        if ($method == 'POST' || $method == 'PUT') {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         }
-    
+
+        if($method == 'DELETE'){
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        }
+
         if (!empty($headers)) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
-    
+
         $response = curl_exec($ch);
-    
+
         if (curl_error($ch)) {
             trigger_error('cURL error:' . curl_error($ch));
         }
-    
+
         curl_close($ch);
         return $response;
     }
@@ -125,15 +130,24 @@ class SendToElastic
 
     /**
      * Send json file to elastic search endpoint
-     *
+     *delete existing document before insert a new.delete existing document before insert a new.
      * @return void
      */
     public function make()
     {
         $ret = json_decode($this->data); // decode $this->data object
         $this->id = str_replace('/', '_', $ret->repo . $ret->path); // concat $reto->repo with $ret->path and repleace '/' to '_' to use like a unique id
+        $this->delete($this->id); // delete existing document before insert a new.
         $url = $this->elsHost . '/' . $this->elsIndex . '/' . $this->elsType . '/' . $this->id; // make url to ES api request
-        $this->request($url, $this->data); // make post request on $url path with $this->data content
+        $this->request($url, 'PUT', $this->data); // make post request on $url path with $this->data content
+    }
+
+    /**
+     * delete els document
+     */
+    public function delete($id){
+      $url = $this->elsHost . '/' . $this->elsIndex . '/' . $this->elsType . '/' . $id; //
+      $this->request($url, 'DELETE'); //
     }
 }
 /*
